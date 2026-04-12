@@ -3,96 +3,142 @@ import json
 import io
 import numpy as np
 import time
+from PIL import Image, ImageDraw, ImageFont
+
+# Проверяем наличие ultralytics для поддержки .pt
+try:
+    from ultralytics import YOLO
+
+    HAS_ULTRALYTICS = True
+except ImportError:
+    HAS_ULTRALYTICS = False
+
 import onnxruntime as ort
-from PIL import Image, ImageDraw
 
 
 class YOLOService:
-    def __init__(self, model_filename="best.onnx", classes_filename="classes.json"):
-        self.session = None
+    def __init__(self, pt_model="best.pt", onnx_model="best.onnx", classes_file="classes.json"):
+        self.model_pt = None
+        self.session_onnx = None
         self.classes = {}
+
         base_path = os.path.dirname(os.path.abspath(__file__))
-        model_path = os.path.join(base_path, "..", "models", model_filename)
-        classes_path = os.path.join(base_path, "..", "models", classes_filename)
+        self.models_dir = os.path.join(base_path, "..", "models")
 
-        if os.path.exists(model_path):
+        pt_path = os.path.join(self.models_dir, pt_model)
+        onnx_path = os.path.join(self.models_dir, onnx_model)
+        classes_path = os.path.join(self.models_dir, classes_file)
+
+        # 1. Пытаемся загрузить .pt (Приоритет)
+        if HAS_ULTRALYTICS and os.path.exists(pt_path):
             try:
-                options = ort.SessionOptions()
-                options.intra_op_num_threads = 2
-                options.inter_op_num_threads = 2
+                self.model_pt = YOLO(pt_path)
+                # Берем имена классов напрямую из модели
+                self.classes = self.model_pt.names
+                print(f"🚀 Запущено в режиме PyTorch (.pt): {pt_model}")
+            except Exception as e:
+                print(f"⚠️ Ошибка загрузки .pt: {e}")
 
-                self.session = ort.InferenceSession(
-                    model_path,
-                    sess_options=options,
-                    providers=['CPUExecutionProvider']
-                )
+        # 2. Если .pt не загрузился, пробуем .onnx
+        if self.model_pt is None and os.path.exists(onnx_path):
+            try:
+                opt = ort.SessionOptions()
+                opt.intra_op_num_threads = 2
+                self.session_onnx = ort.InferenceSession(onnx_path, sess_options=opt,
+                                                         providers=['CPUExecutionProvider'])
 
+                # Для ONNX нужны внешние классы
                 if os.path.exists(classes_path):
                     with open(classes_path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
                         self.classes = {int(k): v for k, v in data.items()}
-                print(f"✅ ONNX модель (640) загружена: {model_path}")
+                print(f"☁️ Запущено в режиме ONNX (.onnx): {onnx_model}")
             except Exception as e:
                 print(f"❌ Ошибка инициализации ONNX: {e}")
-        else:
-            print(f"⚠️ Файл модели .onnx НЕ найден: {model_path}")
 
     def predict(self, image_bytes: bytes):
-        if self.session is None:
-            return None, None, "Модель не инициализирована."
+        if self.model_pt:
+            return self._predict_pt(image_bytes)
+        elif self.session_onnx:
+            return self._predict_onnx(image_bytes)
+        else:
+            return None, None, "Ни одна модель не загружена."
 
+    def _predict_pt(self, image_bytes: bytes):
+        try:
+            img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+            results = self.model_pt(np.array(img), conf=0.25, verbose=False)
+            r = results[0]
+
+            detections = []
+            for box in r.boxes:
+                cls_id = int(box.cls[0])
+                detections.append({
+                    "class_id": cls_id,
+                    "class_name": self.classes.get(cls_id, str(cls_id)),
+                    "confidence": round(float(box.conf[0]) * 100, 2),
+                    "bbox": list(map(int, box.xyxy[0]))
+                })
+
+            return Image.fromarray(r.plot()), detections, None
+        except Exception as e:
+            return None, None, f"Ошибка PT: {e}"
+
+    def _predict_onnx(self, image_bytes: bytes):
         try:
             img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
             orig_w, orig_h = img.size
-
             input_size = 640
+
+            # Подготовка
             img_resized = img.resize((input_size, input_size))
             img_np = np.array(img_resized).astype(np.float32) / 255.0
             img_np = np.transpose(img_np, (2, 0, 1))
             img_np = np.expand_dims(img_np, axis=0)
 
-            outputs = self.session.run(None, {self.session.get_inputs()[0].name: img_np})
-
-            output = outputs[0][0]
-            output = output.transpose()
+            outputs = self.session_onnx.run(None, {self.session_onnx.get_inputs()[0].name: img_np})
+            output = outputs[0][0].transpose()
 
             detections = []
-            conf_threshold = 0.25
-
             for pred in output:
                 scores = pred[4:]
-                class_id = np.argmax(scores)
-                confidence = scores[class_id]
-
-                if confidence > conf_threshold:
+                cls_id = np.argmax(scores)
+                conf = scores[cls_id]
+                if conf > 0.25:
                     xc, yc, w, h = pred[:4]
-
-                    x1 = (xc - w / 2) * (orig_w / input_size)
-                    y1 = (yc - h / 2) * (orig_h / input_size)
-                    x2 = (xc + w / 2) * (orig_w / input_size)
-                    y2 = (yc + h / 2) * (orig_h / input_size)
-
+                    x1 = int((xc - w / 2) * (orig_w / input_size))
+                    y1 = int((yc - h / 2) * (orig_h / input_size))
+                    x2 = int((xc + w / 2) * (orig_w / input_size))
+                    y2 = int((yc + h / 2) * (orig_h / input_size))
                     detections.append({
-                        "class_id": int(class_id),
-                        "class_name": self.classes.get(int(class_id), f"ID {class_id}"),
-                        "confidence": round(float(confidence) * 100, 2),
-                        "bbox": [int(x1), int(y1), int(x2), int(y2)]
+                        "class_id": int(cls_id),
+                        "class_name": self.classes.get(int(cls_id), f"ID {cls_id}"),
+                        "confidence": round(float(conf) * 100, 2),
+                        "bbox": [x1, y1, x2, y2]
                     })
 
-            detections = sorted(detections, key=lambda x: x['confidence'], reverse=True)[:15]
+            detections = sorted(detections, key=lambda x: x['confidence'], reverse=True)[:10]
 
+            # Рисование с нормальным шрифтом
             draw = ImageDraw.Draw(img)
-            for det in detections:
-                box = det['bbox']
-                draw.rectangle(box, outline="green", width=4)
+            # Авто-размер шрифта: 3% от высоты картинки
+            font_size = max(20, int(orig_h * 0.03))
 
-                text = f"{det['class_name']} {det['confidence']}%"
-                draw.text((box[0] + 5, box[1] + 5), text, fill="green")
+            try:
+                font_path = os.path.join(os.path.dirname(__file__), "..", "static", "fonts", "GOTHIC.ttf")
+                font = ImageFont.truetype(font_path, font_size)
+            except:
+                font = ImageFont.load_default()
+
+            for det in detections:
+                b = det['bbox']
+                draw.rectangle(b, outline="#2d6a4f", width=max(3, int(orig_w / 200)))
+                draw.text((b[0], b[1] - font_size - 5), f"{det['class_name']} {det['confidence']}%", fill="#2d6a4f",
+                          font=font)
 
             return img, detections, None
-
         except Exception as e:
-            return None, None, f"Ошибка детекции: {str(e)}"
+            return None, None, f"Ошибка ONNX: {e}"
 
     def delete_after_delay(self, file_path: str, delay: int = 3600):
         try:
