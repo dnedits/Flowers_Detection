@@ -21,8 +21,11 @@ async def set_main_menu(bot: Bot):
     ]
     await bot.set_my_commands(main_menu_commands)
 
+config: Config = load_config()
+url = f"https://flat-union-9e75.nickprok2005.workers.dev/bot{config.tg_bot.token}/getMe"
+
 async def check_network():
-    url = "https://flat-union-9e75.nickprok2005.workers.dev/botТВОЙ_ТОКЕН/getMe"
+
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(url) as response:
@@ -58,6 +61,8 @@ async def start_bot():
 
     finally:
         await bot.session.close()
+
+
 
 
 async def main():
