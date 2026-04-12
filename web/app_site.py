@@ -22,11 +22,12 @@ async def home(request: Request):
 
 @app.post("/predict_image")
 async def predict(request: Request, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    original_filename = file.filename # Сохраняем имя
     contents = await file.read()
     annotated_img, detections, error = detector_service.predict(contents)
 
     if error:
-        return templates.TemplateResponse(request, "result.html", {"error": error})
+        return templates.TemplateResponse("result.html", {"request": request, "error": error})
 
     res_dir = os.path.join(BASE_DIR, "static", "results", "web")
     os.makedirs(res_dir, exist_ok=True)
@@ -34,12 +35,14 @@ async def predict(request: Request, background_tasks: BackgroundTasks, file: Upl
     filename = f"{uuid.uuid4().hex}.jpg"
     res_path = os.path.join(res_dir, filename)
     annotated_img.save(res_path)
-
     background_tasks.add_task(detector_service.delete_after_delay, res_path, 3600)
 
-    return templates.TemplateResponse(request, "result.html", {
+    return templates.TemplateResponse("result.html", {
+        "request": request,
         "image_url": f"/static/results/web/{filename}",
-        "detections": detections
+        "detections": detections,
+        "count": len(detections),
+        "filename": original_filename
     })
 
 if __name__ == "__main__":

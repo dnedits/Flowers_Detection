@@ -83,24 +83,42 @@ class YOLOService:
             img_np = np.array(img_resized).astype(np.float32) / 255.0
             img_np = np.transpose(img_np, (2, 0, 1))
             img_np = np.expand_dims(img_np, axis=0)
+
             outputs = self.session_onnx.run(None, {self.session_onnx.get_inputs()[0].name: img_np})
             output = outputs[0][0].transpose()
-            detections = []
+
+            raw_detections = []
             for pred in output:
                 scores = pred[4:]
                 cls_id = np.argmax(scores)
-                if scores[cls_id] > 0.25:
+                conf = scores[cls_id]
+                if conf > 0.35:
                     xc, yc, w, h = pred[:4]
-                    detections.append({
-                        "class_id": int(cls_id), "class_name": self.classes.get(int(cls_id), f"ID {cls_id}"),
-                        "confidence": round(float(scores[cls_id]) * 100, 2),
+                    raw_detections.append({
+                        "class_id": int(cls_id),
+                        "class_name": self.classes.get(int(cls_id), f"ID {cls_id}"),
+                        "confidence": round(float(conf) * 100, 2),
                         "bbox": [int((xc - w / 2) * (orig_w / 640)), int((yc - h / 2) * (orig_h / 640)),
                                  int((xc + w / 2) * (orig_w / 640)), int((yc + h / 2) * (orig_h / 640))]
                     })
+
+            detections = []
+            raw_detections.sort(key=lambda x: x['confidence'], reverse=True)
+            for d in raw_detections:
+                is_duplicate = False
+                for final_d in detections:
+                    if abs(d['bbox'][0] - final_d['bbox'][0]) < 20 and abs(d['bbox'][1] - final_d['bbox'][1]) < 20:
+                        is_duplicate = True
+                        break
+                if not is_duplicate:
+                    detections.append(d)
+
             draw = ImageDraw.Draw(img)
-            for det in sorted(detections, key=lambda x: x['confidence'], reverse=True)[:10]:
-                draw.rectangle(det['bbox'], outline="#2d6a4f", width=3)
-                draw.text((det['bbox'][0], det['bbox'][1] - 10), det['class_name'], fill="#2d6a4f")
+            for det in detections[:20]:
+                draw.rectangle(det['bbox'], outline="#2d6a4f", width=4)
+                draw.text((det['bbox'][0], det['bbox'][1] - 15), f"{det['class_name']} {det['confidence']}%",
+                          fill="#2d6a4f")
+
             return img, detections, None
         except Exception as e:
             return None, None, str(e)
