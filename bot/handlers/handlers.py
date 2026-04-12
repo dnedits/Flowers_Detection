@@ -1,8 +1,9 @@
 import os
 import uuid
+import io  # Добавлено для работы с байтами в памяти
 from aiogram import Router, F, html
 from aiogram.filters import Command
-from aiogram.types import Message, FSInputFile
+from aiogram.types import Message, BufferedInputFile  # Используем буфер вместо записи на диск
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
@@ -15,6 +16,7 @@ router = Router()
 
 class FileState(StatesGroup):
     photo = State()
+
 
 @router.message(Command(commands=['start']))
 async def process_start_command(message: Message, state: FSMContext):
@@ -67,74 +69,58 @@ async def handle_photo(message: Message, state: FSMContext):
         "🔍 Вооружаюсь лупой и ботаническим справочником...\n\n_Это займёт всего мгновение._",
         parse_mode="Markdown"
     )
-    temp_filename = None
-    save_dir = "./web/static/result/bot/image/"
-    os.makedirs(save_dir, exist_ok=True)
 
     try:
         photo = message.photo[-1]
         file_info = await bot.get_file(photo.file_id)
-        photo_bytes = await bot.download_file(file_info.file_path)
+        photo_bytes_io = await bot.download_file(file_info.file_path)
+        img_data = photo_bytes_io.read()
 
-        annotated_img, detections, error = detector_service.predict(photo_bytes.read())
+        annotated_img, detections, error = detector_service.predict(img_data)
 
         if error:
             raise Exception(error)
 
-        temp_filename = os.path.join(save_dir, f"temp_{uuid.uuid4().hex}.jpg")
-        annotated_img.save(temp_filename)
-
         if detections:
             lines = []
             for i, d in enumerate(detections):
-                name = html.quote(d['class_name'])
+                name = html.quote(str(d['class_name']))
                 lines.append(f"🌸 {i + 1}. <b>{name}</b> — уверен на {d['confidence']}%")
 
             header = "🌺 <b>Вот что удалось разглядеть моему зелёному глазу:</b>\n\n"
             footer = "\n\n✨ Природа никогда не перестаёт удивлять, правда?"
-
-            full_caption = header + "\n".join(lines) + footer
-
-            if len(full_caption) > 1024:
-                simple_lines = [f"🌸 {i + 1}. {d['class_name']} — {d['confidence']}%" for i, d in enumerate(detections)]
-                caption = (header + "\n".join(simple_lines) + footer)[:1020] + "..."
-            else:
-                caption = full_caption
+            caption = (header + "\n".join(lines) + footer)[:1024]
         else:
             caption = (
                 "🍂 <b>Как тихо в саду...</b>\n\n"
                 "Мне не встретилось ни одного знакомого растения на этом снимке. "
-                "Возможно, объект слишком далеко или скрыт в тени? "
                 "Попробуйте сделать более крупный план или поймать лучшее освещение. 🌞"
             )
 
-        await loading_msg.delete()
-        loading_msg = None
+        output_buffer = io.BytesIO()
+        annotated_img.save(output_buffer, format="JPEG")
+        output_buffer.seek(0)
 
+        photo_to_send = BufferedInputFile(output_buffer.read(), filename="result.jpg")
+
+        await loading_msg.delete()
         await message.answer_photo(
-            photo=FSInputFile(temp_filename),
+            photo=photo_to_send,
             caption=caption,
             parse_mode="HTML"
         )
 
     except Exception as e:
+        error_text = f"🌫️ <b>Туман сомнений окутал этот снимок...</b>\n\nОшибка: {html.quote(str(e)[:100])}"
         if loading_msg:
-            await loading_msg.edit_text(
-                f"🌫️ <b>Туман сомнений окутал этот снимок...</b>\n\n"
-                f"Ошибка: {html.quote(str(e)[:100])}\n\n"
-                f"Попробуйте прислать другое фото. Я верю, у нас получится! 📸",
-                parse_mode="HTML"
-            )
+            await loading_msg.edit_text(error_text, parse_mode="HTML")
         else:
-            await message.answer(f"❌ Произошла ошибка: {e}")
+            await message.answer(error_text, parse_mode="HTML")
 
     finally:
-        if temp_filename and os.path.exists(temp_filename):
-            os.remove(temp_filename)
         await state.clear()
         await message.answer(
-            "🌿 Я готов вдохновляться природой вместе с вами снова!\n\n"
-            "Пришлите ещё одно фото или нажмите /exit, если хотите отдохнуть. "
-            "Кнопка «Начать детектирование» всегда ждёт вас здесь 👇",
+            "🌿 Я готов вдохновляться природой снова!\n\n"
+            "Пришлите фото или нажмите /exit.",
             reply_markup=html_keyboard
         )

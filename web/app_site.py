@@ -17,9 +17,8 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), na
 async def home(request: Request):
     return templates.TemplateResponse(request, "index.html", {
         "classes": detector_service.classes,
-        "model_loaded": detector_service.model is not None
+        "model_loaded": detector_service.session is not None
     })
-
 
 @app.post("/predict_image")
 async def predict(request: Request, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
