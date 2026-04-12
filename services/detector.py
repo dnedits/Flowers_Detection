@@ -3,14 +3,14 @@ import json
 import io
 import numpy as np
 import time
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 CLASS_COLORS = {
-    "Ромашка": "#e2e2e2",     # Светло-серый (белый)
-    "Одуванчик": "#f9d71c",   # Желтый
-    "Роза": "#e63946",        # Красный
-    "Подсолнечник": "#ffb703", # Оранжево-желтый
-    "Тюльпан": "#ff4d6d"      # Розовый
+    "Ромашка": "#e2e2e2",
+    "Одуванчик": "#f9d71c",
+    "Роза": "#e63946",
+    "Подсолнечник": "#ffb703",
+    "Тюльпан": "#ff4d6d"
 }
 DEFAULT_COLOR = "#2d6a4f"
 
@@ -109,7 +109,6 @@ class YOLOService:
                                  int((xc + w / 2) * (orig_w / 640)), int((yc + h / 2) * (orig_h / 640))]
                     })
 
-            # NMS (фильтрация дублей)
             detections = []
             raw_detections.sort(key=lambda x: x['confidence'], reverse=True)
             for d in raw_detections:
@@ -123,9 +122,7 @@ class YOLOService:
 
             draw = ImageDraw.Draw(img)
 
-            # Попытка загрузить шрифт (если нет, будет стандартный)
             try:
-                # Путь к твоему Gothic.ttf
                 font_path = os.path.join(os.path.dirname(__file__), "..", "web", "static", "fonts", "GOTHIC.TTF")
                 font = ImageFont.truetype(font_path, size=max(18, int(orig_w / 40)))
             except:
@@ -137,16 +134,12 @@ class YOLOService:
                 bbox = det['bbox']
                 label = f"{name} {det['confidence']}%"
 
-                # 1. Рисуем основную рамку объекта
                 draw.rectangle(bbox, outline=color, width=4)
 
-                # 2. Вычисляем размер текста для подложки
                 text_bbox = draw.textbbox((bbox[0], bbox[1]), label, font=font)
 
-                # 3. Рисуем закрашенный прямоугольник под текст (как в YOLO)
                 draw.rectangle([text_bbox[0], text_bbox[1] - 5, text_bbox[2] + 5, text_bbox[3]], fill=color)
 
-                # 4. Рисуем белый текст поверх цветной подложки
                 draw.text((bbox[0] + 2, bbox[1] - font.size), label, fill="white", font=font)
 
             return img, detections, None
