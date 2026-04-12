@@ -22,7 +22,7 @@ async def set_main_menu(bot: Bot):
     await bot.set_my_commands(main_menu_commands)
 
 config: Config = load_config()
-url = f"https://flat-union-9e75.nickprok2005.workers.dev/bot{config.tg_bot.token[:5]}/getMe"
+url = f"https://flat-union-9e75.nickprok2005.workers.dev/bot{config.tg_bot.token}/getMe"
 
 async def check_network():
 
@@ -38,7 +38,7 @@ async def check_network():
 
 async def start_bot():
     config: Config = load_config()
-    print(f"Загружен токен: {config.tg_bot.token[:5]}...***")
+    print(f"Загружен токен: {config.tg_bot.token}")
 
     bot = Bot(token=config.tg_bot.token)
     bot.session._api_server = CUSTOM_SERVER
