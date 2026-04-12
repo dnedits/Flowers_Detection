@@ -7,8 +7,11 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.client.telegram import TelegramAPIServer
 from bot.config_data.config import Config, load_config
 from bot.handlers import handlers
+from aiohttp import ClientTimeout
 
-CUSTOM_SERVER = TelegramAPIServer.from_base("https://flat-union-9e75.nickprok2005.workers.dev/")
+
+
+CUSTOM_SERVER = TelegramAPIServer.from_base("https://flat-union-9e75.nickprok2005.workers.dev")
 
 async def set_main_menu(bot: Bot):
     main_menu_commands = [
@@ -24,9 +27,12 @@ async def start_bot():
 
     bot = Bot(
         token=config.tg_bot.token,
-        session=AiohttpSession(),
-        api_server = CUSTOM_SERVER
+        session=AiohttpSession(
+            api_server=CUSTOM_SERVER,
+            timeout=ClientTimeout(total=30)
+        )
     )
+
 
     dp = Dispatcher()
     dp.include_router(handlers.router)
