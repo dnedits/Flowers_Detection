@@ -6,13 +6,13 @@ import time
 from PIL import Image, ImageDraw, ImageFont
 
 CLASS_COLORS = {
-    "Ромашка": "#e2e2e2",
-    "Одуванчик": "#f9d71c",
-    "Роза": "#e63946",
-    "Подсолнечник": "#ffb703",
-    "Тюльпан": "#ff4d6d"
+    "Ромашка": {"color": "#e2e2e2", "text": "#1e293b"},
+    "Одуванчик": {"color": "#f9d71c", "text": "#1e293b"},
+    "Роза": {"color": "#e63946", "text": "#ffffff"},
+    "Подсолнечник": {"color": "#ffb703", "text": "#1e293b"},
+    "Тюльпан": {"color": "#ff4d6d", "text": "#ffffff"}
 }
-DEFAULT_COLOR = "#2d6a4f"
+DEFAULT_STYLE = {"color": "#2d6a4f", "text": "#ffffff"}
 
 try:
     from ultralytics import YOLO
@@ -100,7 +100,7 @@ class YOLOService:
                 scores = pred[4:]
                 cls_id = np.argmax(scores)
                 conf = scores[cls_id]
-                if conf > 0.30:
+                if conf > 0.35:
                     xc, yc, w, h = pred[:4]
                     raw_detections.append({
                         "class_name": self.classes.get(int(cls_id), f"ID {cls_id}"),
@@ -114,33 +114,54 @@ class YOLOService:
             for d in raw_detections:
                 is_duplicate = False
                 for final_d in detections:
-                    if self._iou(d['bbox'], final_d['bbox']) > 0.45:
+                    if self._iou(d['bbox'], final_d['bbox']) > 0.40:
                         is_duplicate = True
                         break
-                if not is_duplicate:
-                    detections.append(d)
+                if not is_duplicate: detections.append(d)
 
             draw = ImageDraw.Draw(img)
 
             try:
-                font_path = os.path.join(os.path.dirname(__file__), "..", "web", "static", "fonts", "GOTHIC.TTF")
-                font = ImageFont.truetype(font_path, size=max(18, int(orig_w / 40)))
+                base_path = os.path.dirname(os.path.abspath(__file__))
+                font_path = os.path.join(base_path, "..", "web", "static", "fonts", "GOTHIC.TTF")
+                font_size = max(16, int(orig_w / 45))
+                font = ImageFont.truetype(font_path, size=font_size)
             except:
                 font = ImageFont.load_default()
 
             for det in detections[:15]:
                 name = det['class_name']
-                color = CLASS_COLORS.get(name, DEFAULT_COLOR)
+                style = CLASS_COLORS.get(name, DEFAULT_STYLE)
                 bbox = det['bbox']
                 label = f"{name} {det['confidence']}%"
 
-                draw.rectangle(bbox, outline=color, width=4)
+                draw.rectangle(bbox, outline=style["color"], width=4)
 
-                text_bbox = draw.textbbox((bbox[0], bbox[1]), label, font=font)
+                try:
+                    text_w = font.getlength(label)
+                    ascent, descent = font.getmetrics()
+                    text_h = ascent + descent
+                except:
+                    text_bbox = draw.textbbox((0, 0), label, font=font)
+                    text_w = text_bbox[2] - text_bbox[0]
+                    text_h = text_bbox[3] - text_bbox[1]
 
-                draw.rectangle([text_bbox[0], text_bbox[1] - 5, text_bbox[2] + 5, text_bbox[3]], fill=color)
+                padding = 4
+                bg_rect = [
+                    bbox[0],
+                    bbox[1] - text_h - (padding * 2),
+                    bbox[0] + text_w + (padding * 2),
+                    bbox[1]
+                ]
 
-                draw.text((bbox[0] + 2, bbox[1] - font.size), label, fill="white", font=font)
+                draw.rectangle(bg_rect, fill=style["color"])
+
+                draw.text(
+                    (bbox[0] + padding, bbox[1] - text_h - padding),
+                    label,
+                    fill=style["text"],
+                    font=font
+                )
 
             return img, detections, None
         except Exception as e:
