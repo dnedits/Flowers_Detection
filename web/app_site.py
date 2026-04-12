@@ -5,13 +5,13 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from services.detector import detector_service
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__)) # Это папка /web
 
 app = FastAPI(title="Web-сайт детектирования")
 
+
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
-
 
 @app.get("/")
 async def home(request: Request):
@@ -23,7 +23,6 @@ async def home(request: Request):
 @app.post("/predict_image")
 async def predict(request: Request, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     contents = await file.read()
-
     annotated_img, detections, error = detector_service.predict(contents)
 
     if error:
@@ -34,19 +33,11 @@ async def predict(request: Request, background_tasks: BackgroundTasks, file: Upl
 
     filename = f"{uuid.uuid4().hex}.jpg"
     res_path = os.path.join(res_dir, filename)
-
     annotated_img.save(res_path)
 
     background_tasks.add_task(detector_service.delete_after_delay, res_path, 3600)
 
     return templates.TemplateResponse(request, "result.html", {
         "image_url": f"/static/results/web/{filename}",
-        "detections": detections,
-        "filename": file.filename,
-        "count": len(detections)
+        "detections": detections
     })
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)

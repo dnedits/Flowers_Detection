@@ -1,6 +1,6 @@
 @font-face {
     font-family: "Gothic";
-    src: url("/static/fonts/GOTHIC.ttf") format("truetype");
+    src: url("/static/fonts/GOTHIC.TTF") format("truetype");
     font-weight: 500;
     font-style: normal;
     font-display: swap;
@@ -10,6 +10,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: "Gothic", sans-serif !important;
 }
 
 body {
