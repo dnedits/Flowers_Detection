@@ -24,13 +24,10 @@ async def set_main_menu(bot: Bot):
 
 async def start_bot():
     config: Config = load_config()
-    session = AiohttpSession(api_server=CUSTOM_SERVER)
     print(f"Загружен токен: {config.tg_bot.token[:5]}...***")
 
-    bot = Bot(
-        token=config.tg_bot.token,
-        session=session
-    )
+    bot = Bot(token=config.tg_bot.token)
+    bot.session._api_server = CUSTOM_SERVER
 
 
     dp = Dispatcher()
