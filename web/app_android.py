@@ -13,7 +13,7 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), na
 
 @app.get("/")
 async def health_check():
-    return {"status": "ok", "model_loaded": detector_service.session is not None}
+    return {"status": "ok", "model_loaded": detector_service.is_loaded}
 
 
 @app.post("/predict_image")
