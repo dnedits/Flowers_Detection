@@ -7,7 +7,7 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.client.telegram import TelegramAPIServer
 from bot.config_data.config import Config, load_config
 from bot.handlers import handlers
-from aiohttp import ClientTimeout
+import aiohttp
 
 
 
@@ -20,6 +20,17 @@ async def set_main_menu(bot: Bot):
         BotCommand(command='/exit', description='🌸 Попрощаться и уйти в тишину до новой встречи')
     ]
     await bot.set_my_commands(main_menu_commands)
+
+async def check_network():
+    url = "https://flat-union-9e75.nickprok2005.workers.dev/botТВОЙ_ТОКЕН/getMe"
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(url) as response:
+                print(f"Статус проверки сети: {response.status}")
+                print(await response.text())
+        except Exception as e:
+            print(f"Ошибка сети в коде: {e}")
+
 
 
 async def start_bot():
@@ -52,6 +63,7 @@ async def start_bot():
 async def main():
     while True:
         try:
+            await check_network()
             await start_bot()
         except Exception as e:
             traceback.print_exc()
