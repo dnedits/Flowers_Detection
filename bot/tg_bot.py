@@ -8,6 +8,7 @@ from aiogram.client.telegram import TelegramAPIServer
 from bot.config_data.config import Config, load_config
 from bot.handlers import handlers
 
+CUSTOM_SERVER = TelegramAPIServer.from_base("https://flat-union-9e75.nickprok2005.workers.dev/")
 
 async def set_main_menu(bot: Bot):
     main_menu_commands = [
@@ -21,11 +22,10 @@ async def set_main_menu(bot: Bot):
 async def start_bot():
     config: Config = load_config()
 
-    CUSTOM_SERVER = TelegramAPIServer.from_base("https://flat-union-9e75.nickprok2005.workers.dev/")
-
     bot = Bot(
         token=config.tg_bot.token,
-        session=AiohttpSession(api_server=CUSTOM_SERVER)
+        session=AiohttpSession(),
+        api_server = CUSTOM_SERVER
     )
 
     dp = Dispatcher()
