@@ -4,7 +4,7 @@ import traceback
 from aiogram import Bot, Dispatcher
 from aiogram.types import BotCommand
 from aiogram.client.session.aiohttp import AiohttpSession
-
+from aiogram.client.telegram import TelegramAPIServer
 from bot.config_data.config import Config, load_config
 from bot.handlers import handlers
 
@@ -21,11 +21,11 @@ async def set_main_menu(bot: Bot):
 async def start_bot():
     config: Config = load_config()
 
-    session = AiohttpSession(proxy="socks5://127.0.0.1:9050")
+    CUSTOM_SERVER = TelegramAPIServer.from_base("https://flat-union-9e75.nickprok2005.workers.dev/")
 
     bot = Bot(
         token=config.tg_bot.token,
-        session=session
+        session=AiohttpSession(api_server=CUSTOM_SERVER)
     )
 
     dp = Dispatcher()
