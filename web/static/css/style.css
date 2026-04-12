@@ -1,0 +1,295 @@
+@font-face {
+    font-family: "Gothic";
+    src: url("/static/fonts/GOTHIC.ttf") format("truetype");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Gothic", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg,
+        #ffffff 0%,
+        #f0f9ed 40%,
+        #e2f3db 70%,
+        #ffffff 100%);
+    background-attachment: fixed;
+    margin: 0;
+    padding: 2rem 1.5rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #0f172a;
+}
+
+main, .main-content, .app-container {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+h1, h2 {
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+h1 {
+    font-size: 2.75rem;
+    background: linear-gradient(135deg, #0f172a, #2d6a4f);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+    width: auto;
+}
+
+.status {
+    text-align: center;
+    margin: 1.5rem auto;
+    font-weight: 500;
+    background: #ffffff;
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    border-radius: 100px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid #e2e8f0;
+}
+
+.ok { color: #166534; background: #f0fdf4; border-color: #bbf7d0; }
+.bad { color: #b91c1c; background: #fef2f2; border-color: #fecaca; }
+
+.container {
+    display: flex;
+    gap: 1.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 2.5rem 0;
+}
+
+.card {
+    background: #ffffff;
+    padding: 1.75rem;
+    border-radius: 28px;
+    width: 360px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.03), 0 2px 4px rgba(0,0,0,0.05);
+    transition: all 0.25s ease;
+    border: 1px solid #e9f0e3;
+    text-align: center;
+}
+
+.card:hover {
+    box-shadow: 0 20px 30px -12px rgba(0,0,0,0.1);
+}
+
+.card h3 {
+    margin-top: 0;
+    color: #1e293b;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+input[type=file] {
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 60px;
+    background: #fafcff;
+    width: 100%;
+    font-size: 0.9rem;
+    color: #1e293b;
+    transition: 0.2s;
+    font-family: inherit;
+}
+
+button {
+    padding: 0.65rem 1.75rem;
+    border: none;
+    border-radius: 60px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    background: #1e293b;
+    color: white;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+button:hover {
+    background: #0f172a;
+    transform: scale(0.98);
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 1px solid #eef2ff;
+    display: block;
+    margin: 1.5rem auto;
+}
+
+.box {
+    background: #ffffff;
+    padding: 1.75rem;
+    border-radius: 28px;
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    border: 1px solid #edf2f7;
+    text-align: center;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+a {
+    text-decoration: none;
+    color: #2d6a4f;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 1rem;
+    padding: 0.5rem 1.25rem;
+    background: transparent;
+    border-radius: 60px;
+    transition: 0.2s;
+    border: 1px solid #e2e8f0;
+}
+
+a:hover {
+    background: #f1f5f9;
+    color: #1e4620;
+    transform: translateY(-1px);
+}
+
+a::before {
+    content: "🍃";
+    font-size: 1rem;
+}
+
+footer {
+    margin-top: auto;
+    width: 100%;
+    padding: 0.5rem 0;
+    display: flex;
+    justify-content: center;
+    background: transparent;
+}
+
+.footer-icons {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+}
+
+.icon-link {
+    --icon-color: #2d6a4f;
+    display: flex;
+    width: 40px;
+    height: 40px;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+    border: none !important;
+    background: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+}
+
+.icon-link::before {
+    display: none !important;
+}
+
+.icon-link:hover {
+    opacity: 1;
+    transform: scale(0.95);
+    --icon-color: #1e293b;
+}
+
+.footer-svg {
+    width: 100%;
+    height: 100%;
+    fill: var(--icon-color);
+    transition: fill 0.3s ease;
+}
+
+.footer-svg circle,
+.footer-svg path {
+    fill: inherit;
+}
+
+.footer-svg path[fill="#FFFFFF"],
+.footer-svg path[fill="#ffffff"] {
+    fill: #ffffff !important;
+}
+
+.drop-zone {
+    max-width: 100%;
+    height: 150px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-weight: 500;
+    cursor: pointer;
+    color: #64748b;
+    border: 2px dashed #cbd5e1;
+    border-radius: 20px;
+    background: #fafcff;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.drop-zone--over {
+    border-style: solid;
+    border-color: #2d6a4f;
+    background: #f0f9ed;
+    color: #2d6a4f;
+    transform: scale(1.02);
+}
+
+.drop-zone__input { display: none; }
+
+.drop-zone__thumb {
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+    overflow: hidden;
+    background-color: #cccccc;
+    background-size: cover;
+    position: relative;
+}
+
+
+@media (max-width: 1024px) {
+    .card { width: calc(50% - 1.25rem); min-width: 300px; }
+}
+
+@media (max-width: 768px) {
+    h1 { font-size: 2rem; }
+    .container { flex-direction: column; align-items: center; }
+    .card { width: 100%; max-width: 400px; }
+    footer { padding: 1.5rem 0; }
+    .icon-link { width: 36px; height: 36px; }
+}
+
+@media (max-width: 480px) {
+    h1 { font-size: 1.75rem; }
+    button { width: 100%; }
+    .drop-zone { height: 120px; }
+    .icon-link { width: 32px; height: 32px; }
+    .footer-icons { gap: 18px; }
+}

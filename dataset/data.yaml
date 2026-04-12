@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 5
+names: ['daisy', 'dandelion', 'rose', 'sunflower', 'tulip']
+
+roboflow:
+  workspace: mikolich
+  project: flowers-tpe75-ouu36
+  version: 2
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/mikolich/flowers-tpe75-ouu36/dataset/2
