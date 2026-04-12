@@ -24,6 +24,7 @@ async def set_main_menu(bot: Bot):
 
 async def start_bot():
     config: Config = load_config()
+    print(f"Загружен токен: {config.tg_bot.token[:5]}...***")
 
     bot = Bot(
         token=config.tg_bot.token,
