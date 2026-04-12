@@ -5,8 +5,8 @@ from aiogram import Bot, Dispatcher
 from aiogram.types import BotCommand
 from aiogram.client.session.aiohttp import AiohttpSession
 
-from config_data.config import Config, load_config
-from handlers import handlers
+from bot.config_data.config import Config, load_config
+from bot.handlers import handlers
 
 
 async def set_main_menu(bot: Bot):

@@ -1,9 +1,9 @@
 import os
 import uuid
-import io  # Добавлено для работы с байтами в памяти
+import io
 from aiogram import Router, F, html
 from aiogram.filters import Command
-from aiogram.types import Message, BufferedInputFile  # Используем буфер вместо записи на диск
+from aiogram.types import Message, BufferedInputFile
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
