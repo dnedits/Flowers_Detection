@@ -22,7 +22,7 @@ async def set_main_menu(bot: Bot):
     await bot.set_my_commands(main_menu_commands)
 
 config: Config = load_config()
-url = f"https://flat-union-9e75.nickprok2005.workers.dev/bot8724068977:AAE24aRUaZ8qtD3yK6SXbFyKRMHqhTg6HBw/getMe"
+url = f"https://flat-union-9e75.nickprok2005.workers.dev/bot{config.tg_bot.token[:5]}/getMe"
 
 async def check_network():
 
