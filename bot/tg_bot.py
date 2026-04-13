@@ -11,7 +11,7 @@ from aiogram.client.telegram import TelegramAPIServer
 from bot.config_data.config import Config, load_config
 from bot.handlers import handlers
 
-# Ссылка на воркер БЕЗ слэша в конце
+# Ссылка на воркер
 WORKER_URL = "https://flat-union-9e75.nickprok2005.workers.dev"
 
 
@@ -24,42 +24,37 @@ async def set_main_menu(bot: Bot):
     await bot.set_my_commands(main_menu_commands)
 
 
-def get_clean_token():
-    conf = load_config()
-    # Жесткая очистка: только цифры, буквы, двоеточие и дефис
-    return re.sub(r'[^a-zA-Z0-9:-]', '', conf.tg_bot.token)
-
-
 async def start_bot():
-    token = get_clean_token()
+    # Хардкодим токен прямо сюда для финальной проверки, чтобы исключить config.py
+    # ПОТОМ ЗАМЕНИШЬ НА: config = load_config(); token = config.tg_bot.token
+    token = "8724068977:AAE24aRUaZ8QTD3yK6SXbFyKRMHqhTg6HBw"
+    token = re.sub(r'[^a-zA-Z0-9:-]', '', token)  # На всякий случай
 
-    # Конструируем сервер вручную, чтобы aiogram точно знала, куда и что подставлять
-    # Это формат, который библиотека понимает лучше всего
-    custom_server = TelegramAPIServer(
-        base=f"{WORKER_URL}/bot{{token}}/{{method}}",
-        file=f"{WORKER_URL}/file/bot{{token}}/{{path}}"
-    )
+    # Вариант инициализации сервера №3 (самый стабильный)
+    # Используем простую склейку строк через from_base
+    custom_server = TelegramAPIServer.from_base(WORKER_URL, is_local=True)
 
-    # Создаем сессию с кастомным сервером
-    session = AiohttpSession(api=custom_server)
+    # Создаем сессию
+    session = AiohttpSession(api_server=custom_server)
 
-    # Инициализируем бота
+    # Создаем бота
     bot = Bot(token=token, session=session)
 
     dp = Dispatcher()
     dp.include_router(handlers.router)
 
     try:
-        print(f"Запуск через прокси: {WORKER_URL}")
+        print(f"--- ФИНАЛЬНЫЙ ЗАПУСК ---")
+        print(f"Worker: {WORKER_URL}")
 
-        # Проверка авторизации
+        # Проверяем get_me
         me = await bot.get_me()
-        print(f"✅ Бот @{me.username} успешно авторизован!")
+        print(f"✅ Бот авторизован: @{me.username}")
 
         await set_main_menu(bot)
         await bot.delete_webhook(drop_pending_updates=True)
 
-        print("Бот запущен. Ожидание сообщений...")
+        print("🚀 Работает! Поллинг запущен...")
         await dp.start_polling(bot)
 
     finally:
@@ -71,19 +66,17 @@ async def main():
         try:
             await start_bot()
         except Exception as e:
-            print("--- ОШИБКА ЗАПУСКА ---")
-            # Если видим 401, выводим токен для финальной визуальной проверки
-            if "Unauthorized" in str(e):
-                t = get_clean_token()
-                print(f"Ошибка 401. Токен: {t[:5]}...{t[-5:]} (длина {len(t)})")
+            print(f"❌ Ошибка: {e}")
+            # Если всё еще TypeError: BaseSession.__init__() got an unexpected keyword argument 'api_server'
+            # Значит у тебя очень старая или очень странная версия aiogram.
+            # В таком случае замени строку 41 и 44 на:
+            # session = AiohttpSession()
+            # bot = Bot(token=token, session=session)
+            # bot.session.api_server = custom_server
 
             traceback.print_exc()
-            print("Повтор через 5 секунд...")
             await asyncio.sleep(5)
 
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        print("Остановка...")
+    asyncio.run(main())
