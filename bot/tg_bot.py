@@ -35,10 +35,9 @@ async def start_bot():
     custom_server = TelegramAPIServer.from_base(WORKER_URL, is_local=True)
 
     # Создаем сессию
-    session = AiohttpSession(api_server=custom_server)
-
-    # Создаем бота
+    session = AiohttpSession()
     bot = Bot(token=token, session=session)
+    bot.session.api_server = custom_server
 
     dp = Dispatcher()
     dp.include_router(handlers.router)
