@@ -21,4 +21,8 @@ def load_config(path: str | None = None) -> Config:
         path = os.path.join(current_dir, '..', '..', '.env')
 
     env.read_env(path)
-    return Config(tg_bot=TgBot(token=env('BOT_TOKEN')))
+    return Config(
+        tg_bot=TgBot(
+            token=env('BOT_TOKEN').strip().replace('"', '').replace("'", "")
+        )
+    )
