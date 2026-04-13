@@ -41,7 +41,7 @@ async def start_bot():
     )
 
     # Создаем сессию с кастомным сервером
-    session = AiohttpSession(api_server=custom_server)
+    session = AiohttpSession(api=custom_server)
 
     # Инициализируем бота
     bot = Bot(token=token, session=session)
