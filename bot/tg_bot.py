@@ -24,6 +24,17 @@ async def set_main_menu(bot: Bot):
 config: Config = load_config()
 url = f"https://flat-union-9e75.nickprok2005.workers.dev/bot{config.tg_bot.token}/getMe"
 
+config = load_config()
+raw_token = config.tg_bot.token
+
+print(f"--- АНАЛИЗ ТОКЕНА ---")
+print(f"Длина токена: {len(raw_token)}")
+print(f"Первые 5 символов: '{raw_token[:5]}'")
+print(f"Последние 5 символов: '{raw_token[-5:]}'")
+print(f"Есть ли пробелы: {raw_token != raw_token.strip()}")
+print(f"Токен в представлении Python: {repr(raw_token)}")
+print(f"----------------------")
+
 async def check_network():
 
     async with aiohttp.ClientSession() as session:
