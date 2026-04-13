@@ -54,7 +54,7 @@ async def start_bot():
 
     # 2. Создаем сессию, указывая api_server (как в документации)
     # Если здесь вылетает ошибка, значит версия aiogram требует создания через пропсы
-    session = AiohttpSession(api_url=custom_server)
+    session = AiohttpSession(api=custom_server)
 
     # 3. Инициализируем бота
     bot = Bot(token=token, session=session)
