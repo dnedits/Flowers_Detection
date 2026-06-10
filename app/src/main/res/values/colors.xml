@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_start">#FFFFFF</color>
+    <color name="bg_mid">#F0F9ED</color>
+    <color name="bg_end">#E2F3DB</color>
+
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#1E293B</color>
+    <color name="accent_green">#2D6A4F</color>
+    <color name="accent_green_dark">#1E4620</color>
+
+    <color name="card_white">#FFFFFF</color>
+    <color name="border_soft">#E9F0E3</color>
+    <color name="input_bg">#FAFCFF</color>
+    <color name="gray_soft">#DDDDDD</color>
+
+    <color name="white">#FFFFFF</color>
+</resources>

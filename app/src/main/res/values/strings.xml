@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Flowers Detection</string>
+
+    <string name="footer_copyright">©2026 digundesign</string>
+    <string name="title_main">ОПОЗНАВАНИЕ И ДЕТЕКТИРОВАНИЕ РАСТЕНИЙ</string>
+    <string name="title_result">Результат анализа</string>
+
+    <string name="result_objects_count">Найдено объектов: 0</string>
+    <string name="result_placeholder">Загрузите фото для начала…</string>
+
+    <string name="button_take_photo">Камера</string>
+    <string name="button_select_image">Галерея</string>
+    <string name="button_upload">Распознать</string>
+    <string name="button_clear">Очистить</string>
+
+    <string name="desc_website">Website</string>
+    <string name="desc_telegram">Telegram</string>
+</resources>
